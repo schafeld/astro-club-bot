@@ -16,7 +16,7 @@ ui_texts = {
         "api_key_info": "Please provide your OpenAI API key to continue.",
         "chat_input": "What would you like to research or prepare for your astronomy class?",
     },
-    "Deutsch": {
+    "German": {
         "title": "⭐️🤖💬 Astro Club Bot",
         "intro": (
             "Dies ist ein Recherche-Chatbot für Lehrkräfte im Astronomieunterricht, betrieben mit OpenAI's GPT-4o Modell. "
@@ -33,8 +33,8 @@ ui_texts = {
 
 # Language selection
 lang = st.selectbox(
-    ui_texts["English"]["select_language"] + " / " + ui_texts["Deutsch"]["select_language"],
-    options=["English", "Deutsch"],
+    ui_texts["English"]["select_language"] + " / " + ui_texts["German"]["select_language"],
+    options=["English", "German"],
     index=0
 )
 labels = ui_texts[lang]
@@ -91,9 +91,13 @@ try:
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Print the prompt before streaming the answer
+        # Log the full prompt (all messages) before streaming the answer
         with st.chat_message("assistant"):
-            st.markdown(f"**Prompt:** {prompt}")
+            st.markdown("**Full Prompt (Messages):**")
+            for message in st.session_state.messages:
+                st.markdown(f"- **{message['role'].capitalize()}**: {message['content']}")
+
+            # Stream the answer
             response = st.write_stream(
                 client.chat.completions.create(
                     model="gpt-4o",
