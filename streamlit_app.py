@@ -1,19 +1,46 @@
 import streamlit as st
 from openai import OpenAI
 
-st.title("⭐️🤖💬 Astro Club Bot")
-st.write(
-    "This is a research assistant chatbot for astronomy class teachers, powered by OpenAI's GPT-4o model. "
-    "You can select the output language and specify the desired output format. "
-    "To use this app, provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys)."
-)
+# Language-dependent UI labels and placeholders
+ui_texts = {
+    "English": {
+        "title": "⭐️🤖💬 Astro Club Bot",
+        "intro": (
+            "This is a research assistant chatbot for astronomy class teachers, powered by OpenAI's GPT-4o model. "
+            "You can select the output language and specify the desired output format. "
+            "To use this app, provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys)."
+        ),
+        "select_language": "Select output language",
+        "output_format_label": "Specify the desired output format",
+        "api_key_label": "Enter your OpenAI API Key",
+        "api_key_info": "Please provide your OpenAI API key to continue.",
+        "chat_input": "What would you like to research or prepare for your astronomy class?",
+    },
+    "Deutsch": {
+        "title": "⭐️🤖💬 Astro Club Bot",
+        "intro": (
+            "Dies ist ein Recherche-Chatbot für Lehrkräfte im Astronomieunterricht, betrieben mit OpenAI's GPT-4o Modell. "
+            "Sie können die Ausgabesprache wählen und das gewünschte Ausgabeformat angeben. "
+            "Um diese App zu nutzen, geben Sie einen OpenAI API-Schlüssel ein, den Sie [hier](https://platform.openai.com/account/api-keys) erhalten."
+        ),
+        "select_language": "Ausgabesprache auswählen",
+        "output_format_label": "Gewünschtes Ausgabeformat angeben",
+        "api_key_label": "OpenAI API-Schlüssel eingeben",
+        "api_key_info": "Bitte geben Sie Ihren OpenAI API-Schlüssel ein, um fortzufahren.",
+        "chat_input": "Worüber möchten Sie recherchieren oder etwas für den Astronomieunterricht vorbereiten?",
+    }
+}
 
 # Language selection
 lang = st.selectbox(
-    "Select output language / Sprache auswählen",
+    ui_texts["English"]["select_language"] + " / " + ui_texts["Deutsch"]["select_language"],
     options=["English", "Deutsch"],
     index=0
 )
+labels = ui_texts[lang]
+
+st.title(labels["title"])
+st.write(labels["intro"])
 
 # Output format specification
 output_format_options = {
@@ -21,7 +48,7 @@ output_format_options = {
     "Deutsch": "Generiere eine Seite Text in Deutsch(!), der vom Verständnis her für Viertklässler geeignet ist. Hänge strukturierte Quellen für tiefergehende Informationen, fachlich passende Youtube-Clips und Bilder bei Wikipedia an."
 }
 output_format = st.text_area(
-    "Specify the desired output format / Gewünschtes Ausgabeformat angeben",
+    labels["output_format_label"],
     value=output_format_options[lang],
     height=80
 )
@@ -31,9 +58,9 @@ api_key = st.secrets.get("OPENAI_API_KEY", None)
 
 # If not found, ask the user for their API key
 if not api_key:
-    api_key = st.text_input("Enter your OpenAI API Key", type="password")
+    api_key = st.text_input(labels["api_key_label"], type="password")
     if not api_key:
-        st.info("Please provide your OpenAI API key to continue.", icon="🗝️")
+        st.info(labels["api_key_info"], icon="🗝️")
         st.stop()
 
 try:
@@ -59,22 +86,24 @@ try:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("What would you like to research or prepare for your astronomy class?"):
+    if prompt := st.chat_input(labels["chat_input"]):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        stream = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
-
+        # Print the prompt before streaming the answer
         with st.chat_message("assistant"):
-            response = st.write_stream(stream)
+            st.markdown(f"**Prompt:** {prompt}")
+            response = st.write_stream(
+                client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": m["role"], "content": m["content"]}
+                        for m in st.session_state.messages
+                    ],
+                    stream=True,
+                )
+            )
         st.session_state.messages.append({"role": "assistant", "content": response})
 
 except Exception as e:
