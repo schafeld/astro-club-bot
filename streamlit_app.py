@@ -1,7 +1,7 @@
 import streamlit as st
 from openai import OpenAI
 
-st.title("⭐️🤖💬 Astro Club Bot – Astronomy Research Assistant")
+st.title("⭐️🤖💬 Astro Club Bot")
 st.write(
     "This is a research assistant chatbot for astronomy class teachers, powered by OpenAI's GPT-4o model. "
     "You can select the output language and specify the desired output format. "
@@ -17,8 +17,8 @@ lang = st.selectbox(
 
 # Output format specification
 output_format_options = {
-    "English": "Generate one page of text suitable for fourth graders. Attach structured sources for further information, relevant YouTube clips, and Wikipedia images.",
-    "Deutsch": "Generiere eine Seite Text, der vom Verständnis her für Viertklässler geeignet ist. Hänge strukturierte Quellen für tiefergehende Informationen, fachlich passende Youtube-Clips und Bilder bei Wikipedia an."
+    "English": "Generate one page of text in English suitable for fourth graders. Attach structured sources for further information, relevant YouTube clips, and Wikipedia images.",
+    "Deutsch": "Generiere eine Seite Text in Deutsch(!), der vom Verständnis her für Viertklässler geeignet ist. Hänge strukturierte Quellen für tiefergehende Informationen, fachlich passende Youtube-Clips und Bilder bei Wikipedia an."
 }
 output_format = st.text_area(
     "Specify the desired output format / Gewünschtes Ausgabeformat angeben",
