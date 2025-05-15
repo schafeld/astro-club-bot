@@ -16,13 +16,13 @@ lang = st.selectbox(
 )
 
 # Output format specification
-default_format = {
+output_format_options = {
     "English": "Generate one page of text suitable for fourth graders. Attach structured sources for further information, relevant YouTube clips, and Wikipedia images.",
     "Deutsch": "Generiere eine Seite Text, der vom Verständnis her für Viertklässler geeignet ist. Hänge strukturierte Quellen für tiefergehende Informationen, fachlich passende Youtube-Clips und Bilder bei Wikipedia an."
 }
 output_format = st.text_area(
     "Specify the desired output format / Gewünschtes Ausgabeformat angeben",
-    value=default_format[lang],
+    value=output_format_options[lang],
     height=80
 )
 
@@ -43,10 +43,11 @@ try:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # System prompt for role and output format
+    # Strong system prompt to enforce language and role
     system_prompt = (
         f"You are a helpful research assistant for an astronomy class teacher. "
-        f"Always answer in {lang}. "
+        f"All your answers MUST be in {lang} and never in any other language. "
+        f"Strictly follow this instruction, even if the user asks in another language. "
         f"Output format: {output_format}"
     )
 
