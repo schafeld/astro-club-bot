@@ -37,6 +37,8 @@ lang = st.selectbox(
     options=["English", "German"],
     index=0
 )
+
+# Fetch the correct labels based on the selected language
 labels = ui_texts[lang]
 
 st.title(labels["title"])
