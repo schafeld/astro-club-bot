@@ -32,14 +32,21 @@ ui_texts = {
 }
 
 # Language selection
-lang = st.selectbox(
+selected_language = st.selectbox(
     ui_texts["English"]["select_language"] + " / " + ui_texts["German"]["select_language"],
     options=["English", "German"],
     index=0
 )
 
+# Map the selected language to its proper name for the system prompt
+language_mapping = {
+    "English": "English",
+    "German": "Deutsch"
+}
+language_for_prompt = language_mapping[selected_language]
+
 # Fetch the correct labels based on the selected language
-labels = ui_texts[lang]
+labels = ui_texts[selected_language]
 
 st.title(labels["title"])
 st.write(labels["intro"])
@@ -51,7 +58,7 @@ output_format_options = {
 }
 output_format = st.text_area(
     labels["output_format_label"],
-    value=output_format_options[lang],
+    value=output_format_options[selected_language],
     height=80
 )
 
@@ -72,17 +79,31 @@ try:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Strong system prompt to enforce language and role
-    system_prompt = (
-        f"You are a helpful research assistant for an astronomy class teacher. "
-        f"All your answers MUST be in {lang} and never in any other language. "
-        f"Strictly follow this instruction, even if the user asks in another language. "
-        f"Output format: {output_format}"
-    )
+    # Language-specific system prompts
+    system_prompts = {
+        "English": (
+            f"You are a helpful research assistant for an astronomy class teacher. "
+            f"All your answers MUST be in English and never in any other language. "
+            f"Strictly follow this instruction, even if the user asks in another language. "
+            f"Output format: {output_format}"
+        ),
+        "German": (
+            f"Du bist ein hilfreicher Recherche-Assistent für Astronomielehrkräfte. "
+            f"Alle deine Antworten MÜSSEN auf Deutsch sein und niemals in einer anderen Sprache. "
+            f"Befolge diese Anweisung strikt, auch wenn der Benutzer in einer anderen Sprache fragt. "
+            f"Ausgabeformat: {output_format}"
+        )
+    }
+    
+    # Select the appropriate system prompt based on the selected language
+    system_prompt = system_prompts[selected_language]
 
     # Ensure system prompt is always the first message
     if not st.session_state.messages or st.session_state.messages[0].get("role") != "system":
         st.session_state.messages = [{"role": "system", "content": system_prompt}]
+    else:
+        # Update the system prompt if language changed
+        st.session_state.messages[0] = {"role": "system", "content": system_prompt}
 
     for message in st.session_state.messages[1:]:
         with st.chat_message(message["role"]):
