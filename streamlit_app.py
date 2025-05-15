@@ -1,11 +1,29 @@
 import streamlit as st
 from openai import OpenAI
 
-st.title("⭐️🤖💬 Astro Club Bot")
+st.title("⭐️🤖💬 Astro Club Bot – Astronomy Research Assistant")
 st.write(
-    "This is a simple chatbot that uses OpenAI's GPT-4o model to generate responses. "
-    "To use this app, you need to provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys). "
-    "You can also learn how to build this app step by step by [following our tutorial](https://docs.streamlit.io/develop/tutorials/llms/build-conversational-apps)."
+    "This is a research assistant chatbot for astronomy class teachers, powered by OpenAI's GPT-4o model. "
+    "You can select the output language and specify the desired output format. "
+    "To use this app, provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys)."
+)
+
+# Language selection
+lang = st.selectbox(
+    "Select output language / Sprache auswählen",
+    options=["English", "Deutsch"],
+    index=0
+)
+
+# Output format specification
+default_format = {
+    "English": "Generate one page of text suitable for fourth graders. Attach structured sources for further information, relevant YouTube clips, and Wikipedia images.",
+    "Deutsch": "Generiere eine Seite Text, der vom Verständnis her für Viertklässler geeignet ist. Hänge strukturierte Quellen für tiefergehende Informationen, fachlich passende Youtube-Clips und Bilder bei Wikipedia an."
+}
+output_format = st.text_area(
+    "Specify the desired output format / Gewünschtes Ausgabeformat angeben",
+    value=default_format[lang],
+    height=80
 )
 
 # Try to get the API key from Streamlit secrets
@@ -25,17 +43,27 @@ try:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    for message in st.session_state.messages:
+    # System prompt for role and output format
+    system_prompt = (
+        f"You are a helpful research assistant for an astronomy class teacher. "
+        f"Always answer in {lang}. "
+        f"Output format: {output_format}"
+    )
+
+    # Ensure system prompt is always the first message
+    if not st.session_state.messages or st.session_state.messages[0].get("role") != "system":
+        st.session_state.messages = [{"role": "system", "content": system_prompt}]
+
+    for message in st.session_state.messages[1:]:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("What would you like to learn about?"):
+    if prompt := st.chat_input("What would you like to research or prepare for your astronomy class?"):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
         stream = client.chat.completions.create(
-            # model="gpt-3.5-turbo",
             model="gpt-4o",
             messages=[
                 {"role": m["role"], "content": m["content"]}
