@@ -12,11 +12,12 @@ ui_texts = {
             "To use this app, provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys) or enter the app password so you do not need an API key of your own."
         ),
         "select_language": "Select output language",
-        "output_format_label": "Specify the desired output format",
+        "output_format_label": "Specify optional context, e.g. the desired output format.",
         "api_key_label": "...or enter your own OpenAI API Key",
         "api_key_info_box": "App password or your own API key?",
         "api_key_info": "Please provide your OpenAI API key to continue.",
-        "chat_input": "What would you like to research or prepare for your astronomy class?",
+        "role_input": "What's the role the AI should assume?",
+        "chat_input": "What is your question?",
         "file_uploader_label": "Upload a document for additional context (.pdf, .doc, .docx, .txt, .md)",
         "file_processing": "Processing your file...",
         "file_success": "File processed successfully! The AI will consider this information.",
@@ -34,11 +35,12 @@ ui_texts = {
             "Um diese App zu nutzen, geben Sie einen OpenAI API-Schlüssel ein, den Sie [hier](https://platform.openai.com/account/api-keys) erhalten oder geben Sie das App-Passwort ein, dann brauchen Sie keinen eigenen Schlüssel."
         ),
         "select_language": "Ausgabesprache auswählen",
-        "output_format_label": "Gewünschtes Ausgabeformat angeben",
+        "output_format_label": "Optionalen Kontext angeben, z.B. gewünschtes Ausgabeformat.",
         "api_key_label": "...oder eigenen OpenAI API-Schlüssel eingeben",
         "api_key_info_box": "App Passwort oder eigener OpenAI API-Schlüssel?",
         "api_key_info": "Bitte geben Sie Ihren OpenAI API-Schlüssel ein, um fortzufahren.",
-        "chat_input": "Worüber möchten Sie recherchieren oder etwas für den Astronomieunterricht vorbereiten?",
+        "role_input": "Welche Rolle soll die KI übernehmen?",
+        "chat_input": "Was ist Ihre Frage?",
         "file_uploader_label": "Dokument für zusätzlichen Kontext hochladen (.pdf, .doc, .docx, .txt, .md)",
         "file_processing": "Datei wird verarbeitet...",
         "file_success": "Datei erfolgreich verarbeitet! Die KI wird diese Informationen berücksichtigen.",
@@ -77,17 +79,6 @@ labels = ui_texts[selected_language]
 
 st.title(labels["title"])
 st.write(labels["intro"])
-
-# Output format specification
-output_format_options = {
-    "English": "Generate one page of text in English suitable for fourth graders. Attach structured sources for further information, relevant YouTube clips, and Wikipedia images.",
-    "German": "Generiere eine Seite Text in Deutsch(!), der vom Verständnis her für Viertklässler geeignet ist. Hänge strukturierte Quellen für tiefergehende Informationen, fachlich passende Youtube-Clips und Bilder bei Wikipedia an."
-}
-output_format = st.text_area(
-    labels["output_format_label"],
-    value=output_format_options[selected_language],
-    height=80
-)
 
 # Password protection
 password_correct = False
@@ -142,6 +133,18 @@ try:
     client = OpenAI(api_key=api_key)
     st.success(labels["client_success"])
 
+    # Output format specification / optional context input field
+    output_format_options = {
+        "English": "Generate text in English suitable for fourth graders. Provide quality links for core topics.",
+        "German": "Generiere Text in Deutsch(!), der vom Verständnis her für Viertklässler geeignet ist. Belege alle Kernaussagen mit seriösen Links."
+    }
+    output_format = st.text_area(
+        labels["output_format_label"],
+        value=output_format_options[selected_language],
+        height=80
+    )
+
+
     # Add file uploader for additional context
     uploaded_file = st.file_uploader(
         labels["file_uploader_label"],
@@ -169,15 +172,15 @@ try:
     system_prompts = {
         "English": (
             f"You are a helpful research assistant for an astronomy class teacher. "
-            f"All your answers MUST be in English and never in any other language. "
-            f"Strictly follow this instruction, even if the user asks in another language. "
-            f"Output format: {output_format}"
+            # f"All your answers MUST be in English and never in any other language. "
+            # f"Strictly follow this instruction, even if the user asks in another language. "
+            # f"Output format: {output_format}"
         ),
         "German": (
             f"Du bist ein hilfreicher Recherche-Assistent für Astronomielehrkräfte. "
-            f"Alle deine Antworten MÜSSEN auf Deutsch sein und niemals in einer anderen Sprache. "
-            f"Befolge diese Anweisung strikt, auch wenn der Benutzer in einer anderen Sprache fragt. "
-            f"Ausgabeformat: {output_format}"
+            # f"Alle deine Antworten MÜSSEN auf Deutsch sein und niemals in einer anderen Sprache. "
+            # f"Befolge diese Anweisung strikt, auch wenn der Benutzer in einer anderen Sprache fragt. "
+            # f"Ausgabeformat: {output_format}"
         )
     }
 
@@ -197,7 +200,7 @@ try:
         st.session_state.messages[0] = {"role": "system", "content": system_prompt}
 
     # Question input
-    question = st.text_area(labels["chat_input"], value=system_prompt, height=100)
+    question = st.text_area(labels["role_input"], value=system_prompt, height=100)
 
     # Debug toggle
     debug = st.toggle("Debug", value=False)
