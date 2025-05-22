@@ -196,6 +196,17 @@ try:
         # Update the system prompt if language changed or file uploaded
         st.session_state.messages[0] = {"role": "system", "content": system_prompt}
 
+    # Question input
+    question = st.text_area(labels["chat_input"], value=system_prompt, height=100)
+
+    # Debug toggle
+    debug = st.toggle("Debug", value=False)
+
+    # Debugging prompt construction logic
+    if debug:
+        st.markdown("### Full Prompt (Debug)")
+        st.code(system_prompt, language="markdown")
+
     for message in st.session_state.messages[1:]:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
