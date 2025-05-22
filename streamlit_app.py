@@ -9,11 +9,12 @@ ui_texts = {
         "intro": (
             "This is a research assistant chatbot for astronomy class teachers, powered by OpenAI's GPT-4o model. "
             "You can select the output language and specify the desired output format. "
-            "To use this app, provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys)."
+            "To use this app, provide an OpenAI API key, which you can get [here](https://platform.openai.com/account/api-keys) or enter the app password so you do not need an API key of your own."
         ),
         "select_language": "Select output language",
         "output_format_label": "Specify the desired output format",
-        "api_key_label": "Enter your OpenAI API Key",
+        "api_key_label": "...or enter your own OpenAI API Key",
+        "api_key_info_box": "App password or your own API key?",
         "api_key_info": "Please provide your OpenAI API key to continue.",
         "chat_input": "What would you like to research or prepare for your astronomy class?",
         "file_uploader_label": "Upload a document for additional context (.pdf, .doc, .docx, .txt, .md)",
@@ -30,11 +31,12 @@ ui_texts = {
         "intro": (
             "Dies ist ein Recherche-Chatbot für Lehrkräfte im Astronomieunterricht, betrieben mit OpenAI's GPT-4o Modell. "
             "Sie können die Ausgabesprache wählen und das gewünschte Ausgabeformat angeben. "
-            "Um diese App zu nutzen, geben Sie einen OpenAI API-Schlüssel ein, den Sie [hier](https://platform.openai.com/account/api-keys) erhalten."
+            "Um diese App zu nutzen, geben Sie einen OpenAI API-Schlüssel ein, den Sie [hier](https://platform.openai.com/account/api-keys) erhalten oder geben Sie das App-Passwort ein, dann brauchen Sie keinen eigenen Schlüssel."
         ),
         "select_language": "Ausgabesprache auswählen",
         "output_format_label": "Gewünschtes Ausgabeformat angeben",
-        "api_key_label": "OpenAI API-Schlüssel eingeben",
+        "api_key_label": "...oder eigenen OpenAI API-Schlüssel eingeben",
+        "api_key_info_box": "App Passwort oder eigener OpenAI API-Schlüssel?",
         "api_key_info": "Bitte geben Sie Ihren OpenAI API-Schlüssel ein, um fortzufahren.",
         "chat_input": "Worüber möchten Sie recherchieren oder etwas für den Astronomieunterricht vorbereiten?",
         "file_uploader_label": "Dokument für zusätzlichen Kontext hochladen (.pdf, .doc, .docx, .txt, .md)",
@@ -87,12 +89,51 @@ output_format = st.text_area(
     height=80
 )
 
-# Try to get the API key from Streamlit secrets
-api_key = st.secrets.get("OPENAI_API_KEY", None)
+# Password protection
+password_correct = False
+password_label = "Enter app password..." if selected_language == "English" else "Bitte Passwort für diese Anwendung eingeben..."
+if "PASSWORD_ASTRO_CLUB_BOT" in st.secrets:
+    password = st.text_input(password_label, type="password")
+    if password:
+        if password == st.secrets["PASSWORD_ASTRO_CLUB_BOT"]:
+            password_correct = True
+        else:
+            st.error("Incorrect password. Please try again." if selected_language == "English" else "Falsches Passwort. Bitte versuchen Sie es erneut.")
+            st.stop()
+else:
+    password_correct = True  # No password set in secrets, allow access
 
-# If not found, ask the user for their API key
-if not api_key:
-    api_key = st.text_input(labels["api_key_label"], type="password")
+# API key logic with bordered box and explanation
+with st.container():
+    st.markdown(
+        f"""
+        <div style="border: 2px solid #bbb; border-radius: 8px; padding: 1em; margin-bottom: 1em;">
+            <b>{labels['api_key_info_box']}</b><br>
+            <span>
+                {"You can use the system's OpenAI API key by entering the app password above, or " if selected_language == "English" else "Sie können den OpenAI API-Schlüssel des Systems nutzen, indem Sie oben das App-Passwort eingeben, oder "}
+                <span title="Get your own OpenAI API key at https://platform.openai.com/account/api-keys">
+                    { "enter your own API key below" if selected_language == "English" else "geben Sie unten Ihren eigenen API-Schlüssel ein" }
+                </span>.
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+api_key = None
+if password_correct:
+    api_key = st.secrets.get("OPENAI_API_KEY", None)
+    if not api_key:
+        api_key = st.text_input(labels["api_key_label"], type="password")
+        if not api_key:
+            st.info(labels["api_key_info"], icon="🗝️")
+            st.stop()
+else:
+    api_key = st.text_input(
+        labels["api_key_label"],
+        type="password",
+        help="Get your own OpenAI API key at https://platform.openai.com/account/api-keys" if selected_language == "English" else "Ihren eigenen OpenAI API-Schlüssel erhalten Sie unter https://platform.openai.com/account/api-keys"
+    )
     if not api_key:
         st.info(labels["api_key_info"], icon="🗝️")
         st.stop()
