@@ -216,13 +216,12 @@ try:
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Log the full prompt header message in the chat response section
         with st.chat_message("assistant"):
-            st.markdown(f"**{labels['full_prompt_header']}**")
-            for message in st.session_state.messages:
-                st.markdown(f"- **{message['role'].capitalize()}**: {message['content']}")
-
-            # Stream the answer
+            if debug:
+                st.markdown(f"**{labels['full_prompt_header']}**")
+                for message in st.session_state.messages:
+                    st.markdown(f"- **{message['role'].capitalize()}**: {message['content']}")
+            # Stream the answer (always)
             response = st.write_stream(
                 client.chat.completions.create(
                     model="gpt-4o",
