@@ -1,5 +1,6 @@
 import streamlit as st
 from openai import OpenAI
+import file_utils  # Import our new file processing module
 
 # Language-dependent UI labels and placeholders
 ui_texts = {
@@ -15,6 +16,11 @@ ui_texts = {
         "api_key_label": "Enter your OpenAI API Key",
         "api_key_info": "Please provide your OpenAI API key to continue.",
         "chat_input": "What would you like to research or prepare for your astronomy class?",
+        "file_uploader_label": "Upload a document for additional context (.pdf, .doc, .docx, .txt)",
+        "file_processing": "Processing your file...",
+        "file_success": "File processed successfully! The AI will consider this information.",
+        "file_preview": "Document Content Preview",
+        "file_error": "Error processing file"
     },
     "German": {
         "title": "⭐️🤖💬 Astro Club Bot",
@@ -28,6 +34,11 @@ ui_texts = {
         "api_key_label": "OpenAI API-Schlüssel eingeben",
         "api_key_info": "Bitte geben Sie Ihren OpenAI API-Schlüssel ein, um fortzufahren.",
         "chat_input": "Worüber möchten Sie recherchieren oder etwas für den Astronomieunterricht vorbereiten?",
+        "file_uploader_label": "Dokument für zusätzlichen Kontext hochladen (.pdf, .doc, .docx, .txt)",
+        "file_processing": "Datei wird verarbeitet...",
+        "file_success": "Datei erfolgreich verarbeitet! Die KI wird diese Informationen berücksichtigen.",
+        "file_preview": "Vorschau des Dokumentinhalts",
+        "file_error": "Fehler bei der Verarbeitung der Datei"
     }
 }
 
@@ -76,6 +87,26 @@ try:
     client = OpenAI(api_key=api_key)
     st.success("OpenAI client initialized successfully!")
 
+    # Add file uploader for additional context
+    uploaded_file = st.file_uploader(
+        labels["file_uploader_label"],
+        type=["pdf", "doc", "docx", "txt"]
+    )
+    
+    # Process uploaded file
+    file_content = None
+    if uploaded_file is not None:
+        with st.spinner(labels["file_processing"]):
+            file_content = file_utils.extract_text_from_file(uploaded_file)
+            if file_content and not file_content.startswith("Error:"):
+                st.success(labels["file_success"])
+                # Show content preview
+                with st.expander(labels["file_preview"]):
+                    st.text(file_content[:1000] + "..." if len(file_content) > 1000 else file_content)
+            else:
+                st.error(f"{labels['file_error']}: {file_content}")
+                file_content = None
+
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
@@ -94,15 +125,20 @@ try:
             f"Ausgabeformat: {output_format}"
         )
     }
-    
+
     # Select the appropriate system prompt based on the selected language
     system_prompt = system_prompts[selected_language]
+    
+    # Add file content to system prompt if available
+    if file_content:
+        file_context = f"\n\nThe following document was provided as additional context:\n\n{file_content}"
+        system_prompt += file_context
 
     # Ensure system prompt is always the first message
     if not st.session_state.messages or st.session_state.messages[0].get("role") != "system":
         st.session_state.messages = [{"role": "system", "content": system_prompt}]
     else:
-        # Update the system prompt if language changed
+        # Update the system prompt if language changed or file uploaded
         st.session_state.messages[0] = {"role": "system", "content": system_prompt}
 
     for message in st.session_state.messages[1:]:
