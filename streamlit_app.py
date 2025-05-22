@@ -1,6 +1,6 @@
 import streamlit as st
 from openai import OpenAI
-import file_utils  # Import our new file processing module
+import file_utils
 
 # Language-dependent UI labels and placeholders
 ui_texts = {
@@ -16,11 +16,14 @@ ui_texts = {
         "api_key_label": "Enter your OpenAI API Key",
         "api_key_info": "Please provide your OpenAI API key to continue.",
         "chat_input": "What would you like to research or prepare for your astronomy class?",
-        "file_uploader_label": "Upload a document for additional context (.pdf, .doc, .docx, .txt)",
+        "file_uploader_label": "Upload a document for additional context (.pdf, .doc, .docx, .txt, .md)",
         "file_processing": "Processing your file...",
         "file_success": "File processed successfully! The AI will consider this information.",
         "file_preview": "Document Content Preview",
-        "file_error": "Error processing file"
+        "file_error": "Error processing file",
+        "client_success": "OpenAI client initialized successfully!",
+        "file_context_intro": "The following document was provided as additional context:",
+        "full_prompt_header": "Full Prompt (Messages):"
     },
     "German": {
         "title": "⭐️🤖💬 Astro Club Bot",
@@ -34,18 +37,29 @@ ui_texts = {
         "api_key_label": "OpenAI API-Schlüssel eingeben",
         "api_key_info": "Bitte geben Sie Ihren OpenAI API-Schlüssel ein, um fortzufahren.",
         "chat_input": "Worüber möchten Sie recherchieren oder etwas für den Astronomieunterricht vorbereiten?",
-        "file_uploader_label": "Dokument für zusätzlichen Kontext hochladen (.pdf, .doc, .docx, .txt)",
+        "file_uploader_label": "Dokument für zusätzlichen Kontext hochladen (.pdf, .doc, .docx, .txt, .md)",
         "file_processing": "Datei wird verarbeitet...",
         "file_success": "Datei erfolgreich verarbeitet! Die KI wird diese Informationen berücksichtigen.",
         "file_preview": "Vorschau des Dokumentinhalts",
-        "file_error": "Fehler bei der Verarbeitung der Datei"
+        "file_error": "Fehler bei der Verarbeitung der Datei",
+        "client_success": "OpenAI-Client wurde erfolgreich initialisiert!",
+        "file_context_intro": "Das folgende Dokument wurde als zusätzlicher Kontext bereitgestellt:",
+        "full_prompt_header": "Vollständiger Prompt (Nachrichten):"
     }
 }
 
 # Language selection
+# Define a mapping for display names
+language_display_names = {
+    "English": "English",
+    "German": "Deutsch"
+}
+
+# Language selection with display name mapping
 selected_language = st.selectbox(
     ui_texts["English"]["select_language"] + " / " + ui_texts["German"]["select_language"],
     options=["English", "German"],
+    format_func=lambda x: language_display_names[x],
     index=0
 )
 
@@ -85,12 +99,12 @@ if not api_key:
 
 try:
     client = OpenAI(api_key=api_key)
-    st.success("OpenAI client initialized successfully!")
+    st.success(labels["client_success"])
 
     # Add file uploader for additional context
     uploaded_file = st.file_uploader(
         labels["file_uploader_label"],
-        type=["pdf", "doc", "docx", "txt"]
+        type=["pdf", "doc", "docx", "txt", "md"]  # Added "md"
     )
     
     # Process uploaded file
@@ -131,7 +145,7 @@ try:
     
     # Add file content to system prompt if available
     if file_content:
-        file_context = f"\n\nThe following document was provided as additional context:\n\n{file_content}"
+        file_context = f"\n\n{labels['file_context_intro']}\n\n{file_content}"
         system_prompt += file_context
 
     # Ensure system prompt is always the first message
@@ -150,9 +164,9 @@ try:
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # Log the full prompt (all messages) before streaming the answer
+        # Log the full prompt header message in the chat response section
         with st.chat_message("assistant"):
-            st.markdown("**Full Prompt (Messages):**")
+            st.markdown(f"**{labels['full_prompt_header']}**")
             for message in st.session_state.messages:
                 st.markdown(f"- **{message['role'].capitalize()}**: {message['content']}")
 

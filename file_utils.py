@@ -10,8 +10,8 @@ def extract_text_from_file(file) -> Optional[str]:
         # Get file extension
         file_extension = '.' + file.name.split('.')[-1].lower()
         
-        # Process TXT files
-        if file_extension == '.txt':
+        # Process TXT and MD files
+        if file_extension in ['.txt', '.md']:
             return file.getvalue().decode('utf-8')
         
         # Process PDF files
