@@ -144,7 +144,6 @@ try:
         height=80
     )
 
-
     # Add file uploader for additional context
     uploaded_file = st.file_uploader(
         labels["file_uploader_label"],
@@ -168,49 +167,52 @@ try:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Language-specific system prompts
-    system_prompts = {
-        "English": (
-            f"You are a helpful research assistant for an astronomy class teacher. "
-            # f"All your answers MUST be in English and never in any other language. "
-            # f"Strictly follow this instruction, even if the user asks in another language. "
-            # f"Output format: {output_format}"
-        ),
-        "German": (
-            f"Du bist ein hilfreicher Recherche-Assistent für Astronomielehrkräfte. "
-            # f"Alle deine Antworten MÜSSEN auf Deutsch sein und niemals in einer anderen Sprache. "
-            # f"Befolge diese Anweisung strikt, auch wenn der Benutzer in einer anderen Sprache fragt. "
-            # f"Ausgabeformat: {output_format}"
-        )
+    # Language-specific default base roles
+    default_base_roles = {
+        "English": "You are a helpful research assistant for an astronomy class teacher.",
+        "German": "Du bist ein hilfreicher Recherche-Assistent für Astronomielehrkräfte."
     }
 
-    # Select the appropriate system prompt based on the selected language
-    system_prompt = system_prompts[selected_language]
-    
-    # Add file content to system prompt if available
-    if file_content:
-        file_context = f"\n\n{labels['file_context_intro']}\n\n{file_content}"
-        system_prompt += file_context
+    # User-editable base role input. This replaces the previous 'question' text_area.
+    current_base_role = st.text_area(
+        labels["role_input"],  # "What's the role the AI should assume?"
+        value=default_base_roles[selected_language], 
+        height=100
+    )
 
+    # Construct the full system prompt content
+    system_prompt_parts = []
+    if current_base_role and current_base_role.strip():
+        system_prompt_parts.append(current_base_role.strip())
+    
+    if output_format and output_format.strip(): # Content from the "output_format_label" text area
+        system_prompt_parts.append(output_format.strip())
+
+    if file_content:
+        # Ensure file_context_intro is only added if there's actual file_content
+        file_context_string = f"{labels['file_context_intro']}\n\n{file_content}"
+        system_prompt_parts.append(file_context_string)
+    
+    # Join parts with double newlines, filter out empty/None parts
+    final_system_prompt_content = "\n\n".join(filter(None, system_prompt_parts))
+    
     # Ensure system prompt is always the first message
     if not st.session_state.messages or st.session_state.messages[0].get("role") != "system":
-        st.session_state.messages = [{"role": "system", "content": system_prompt}]
+        st.session_state.messages = [{"role": "system", "content": final_system_prompt_content}]
     else:
-        # Update the system prompt if language changed or file uploaded
-        st.session_state.messages[0] = {"role": "system", "content": system_prompt}
-
-    # Question input
-    question = st.text_area(labels["role_input"], value=system_prompt, height=100)
+        # Only update if the content has actually changed
+        if st.session_state.messages[0].get("content") != final_system_prompt_content:
+            st.session_state.messages[0] = {"role": "system", "content": final_system_prompt_content}
 
     # Debug toggle
     debug = st.toggle("Debug", value=False)
 
     # Debugging prompt construction logic
     if debug:
-        st.markdown("### Full Prompt (Debug)")
-        st.code(system_prompt, language="markdown")
+        st.markdown(f"### {labels['full_prompt_header']} (System Prompt Content)")
+        st.code(final_system_prompt_content, language="markdown")
 
-    for message in st.session_state.messages[1:]:
+    for message in st.session_state.messages[1:]: # Display messages after the system prompt
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
